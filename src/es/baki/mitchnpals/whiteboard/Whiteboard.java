@@ -12,10 +12,9 @@ import javafx.stage.Stage;
 
 public class Whiteboard extends Application {
 	private Color currentColor = Color.BLUE;
-	private Canvas menuCanvas;
-	private Canvas borderCanvas;
+	private Stage primaryStage;
+	private Canvas drawingCanvas, menuCanvas, borderCanvas;
 	private boolean mouseDragged = false, needsRedraw = false;
-	private Canvas drawingCanvas;
 
 	public static void main(String... strings) {
 		launch();
@@ -23,11 +22,14 @@ public class Whiteboard extends Application {
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
+		this.primaryStage = primaryStage;
 
 		Group root = new Group();
 		Scene s = new Scene(root, 300, 300, Color.BLACK);
+		primaryStage.setScene(s);
+		primaryStage.show();
 
-		drawingCanvas = new Canvas(250, 250);
+		drawingCanvas = new Canvas(primaryStage.getWidth(), primaryStage.getHeight());
 		GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
 
 		makeBorderCanvas();
@@ -36,18 +38,16 @@ public class Whiteboard extends Application {
 		redrawBorderCanvas();
 		gc.setFill(Color.BLUE);
 
-		// Resize the width of the drawable surface automatically to match the
-		// size of the window
-		primaryStage.widthProperty().addListener((obs, oldVal, newVal) -> {
+		// Resize the width of the drawable surface automatically to match the size of the window
+		s.widthProperty().addListener((obs, oldVal, newVal) -> {
 			System.out.printf("Width changed from %d to %d%n", oldVal.intValue(), newVal.intValue());
 			drawingCanvas.setWidth(newVal.doubleValue());
 			borderCanvas.setWidth(newVal.doubleValue());
 			redrawBorderCanvas(); // needsRedraw = true;
 		});
 
-		// Resize the height of the drawable surface automatically to match the
-		// size of the window
-		primaryStage.heightProperty().addListener((obs, oldVal, newVal) -> {
+		// Resize the height of the drawable surface automatically to match the size of the window
+		s.heightProperty().addListener((obs, oldVal, newVal) -> {
 			System.out.printf("Height changed from %d to %d%n", oldVal.intValue(), newVal.intValue());
 			drawingCanvas.setHeight(newVal.doubleValue());
 			borderCanvas.setHeight(newVal.doubleValue());
@@ -60,28 +60,42 @@ public class Whiteboard extends Application {
 		root.getChildren().add(drawingCanvas);
 		root.getChildren().add(menuCanvas);
 
-		primaryStage.setScene(s);
-		primaryStage.show();
 	}
 
 	private void redrawBorderCanvas() {
 		GraphicsContext gc = borderCanvas.getGraphicsContext2D();
 		gc.clearRect(0, 0, borderCanvas.getWidth(), borderCanvas.getHeight());
-		gc.setLineWidth(20);
-		gc.setStroke(Color.WHITE);
-		gc.setLineDashes(50d);
-		gc.setStroke(Color.RED);
-		gc.strokeLine(0, 0, borderCanvas.getWidth(), 0);
-		gc.setStroke(Color.GREEN);
-		gc.strokeLine(0, 0, 0, borderCanvas.getHeight());
-		gc.setStroke(Color.BLUE);
-		gc.strokeLine(0, borderCanvas.getHeight() - 20, borderCanvas.getWidth(), borderCanvas.getHeight() - 20);
-		gc.setStroke(Color.YELLOW);
-		gc.strokeLine(borderCanvas.getWidth() - 5, 0, borderCanvas.getWidth() - 5, borderCanvas.getHeight());
+
+		System.out.printf("Border Canvas Dimensions: w:%f h:%f%n", borderCanvas.getWidth(), borderCanvas.getHeight());
+
+		gc.setFill(Color.WHITE);
+		// Top Row
+		for (int row = 0; row < 4; row ++)
+			for (int x = row % 2 == 0 ? 0 : 5; x < borderCanvas.getWidth(); x += 10)
+				gc.fillRect(x, row * 5, 5, 5);
+
+		// Left Side
+		for (int column = 0; column < 4; column ++)
+			for (int y = column % 2 == 0 ? 0 : 5; y < borderCanvas.getHeight(); y += 10)
+				gc.fillRect(column * 5, y, 5, 5);
+
+        // Bottom Row
+        for (int row = 0; row < 4; row ++)
+            for (double x = row % 2 == 0 ? 0 : 5; x < borderCanvas.getWidth(); x += 10) {
+                double y = borderCanvas.getHeight() - 5 - row * 5;
+                gc.fillRect(x, y, 5, 5);
+            }
+
+		// Right Side
+		for (int column = 0; column < 4; column ++)
+            for (int y = column % 2 == 0 ? 0 : 5; y < borderCanvas.getHeight(); y += 10) {
+        		double x = borderCanvas.getWidth() - 5 - column * 5;
+				gc.fillRect(x, y, 5, 5);
+			}
 	}
 
 	private Canvas makeMenuCanvas() {
-		menuCanvas = new Canvas(30, 30);
+		menuCanvas = new Canvas(100, 100);
 		GraphicsContext gc = menuCanvas.getGraphicsContext2D();
 
 		gc.setFill(Color.LIGHTGRAY);
@@ -91,7 +105,7 @@ public class Whiteboard extends Application {
 	}
 
 	private Canvas makeBorderCanvas() {
-		borderCanvas = new Canvas(1000, 1000);
+		borderCanvas = new Canvas(primaryStage.getWidth(), primaryStage.getHeight());
 
 		return borderCanvas;
 	}

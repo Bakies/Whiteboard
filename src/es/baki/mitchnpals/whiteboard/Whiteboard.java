@@ -99,15 +99,15 @@ public class Whiteboard extends Application {
 	private void addMouseListeners(Canvas canvas) {
 		GraphicsContext gc = canvas.getGraphicsContext2D();
 		canvas.addEventHandler(MouseEvent.MOUSE_PRESSED, new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent event) {
-				System.out.printf("Mouse Pressed Event @ %f %f%n", event.getX(), event.getY());
-                gc.beginPath();
-                gc.moveTo(event.getX(), event.getY());
-                gc.stroke();
-            }
-        });
-         
+		@Override
+		public void handle(MouseEvent event) {
+			System.out.printf("Mouse Pressed Event @ %f %f%n", event.getX(), event.getY());
+			gc.beginPath();
+			gc.moveTo(event.getX(), event.getY());
+			gc.stroke();
+		}
+		});
+ 
 		canvas.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(MouseEvent event) {
@@ -125,24 +125,22 @@ public class Whiteboard extends Application {
 		});
 
 		canvas.addEventHandler(MouseEvent.MOUSE_DRAGGED, new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent event) {
+			@Override
+			public void handle(MouseEvent event) {
 				System.out.printf("Mouse Dragged Event @ %f %f%n", event.getX(), event.getY());
-                gc.lineTo(event.getX(), event.getY());
+				gc.lineTo(event.getX(), event.getY());
 				gc.setStroke(currentColor);
-                gc.stroke();
+				gc.stroke();
 				mouseDragged = true;
-            }
-        });
+			}
+		});
  
 		canvas.addEventHandler(MouseEvent.MOUSE_RELEASED, new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent event) {
+			@Override
+			public void handle(MouseEvent event) {
 				System.out.printf("Mouse Released Event @ %f %f%n", event.getX(), event.getY());
 				gc.save();
-            }
+			}
 		});
-
 	}
-
 }

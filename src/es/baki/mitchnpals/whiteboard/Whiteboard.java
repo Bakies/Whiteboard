@@ -10,6 +10,9 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
+import java.io.IOException;
+import java.net.*;
+
 public class Whiteboard extends Application {
     private Color currentColor = Color.BLUE;
     private Stage primaryStage;
@@ -17,7 +20,9 @@ public class Whiteboard extends Application {
     private boolean mouseDragged = false, needsRedraw = false;
 
     public static void main(String... strings) {
+        // Starts the GUI
         launch();
+        // Starts the multicast receiver for network discovery
     }
 
     @Override
@@ -68,29 +73,33 @@ public class Whiteboard extends Application {
 
         System.out.printf("Border Canvas Dimensions: w:%f h:%f%n", borderCanvas.getWidth(), borderCanvas.getHeight());
 
+        int squareSize = 5;
+        int roundedWidth = ((int) borderCanvas.getWidth()) / (squareSize * 2) * (squareSize * 2);
+        int roundedHeight = ((int) borderCanvas.getHeight()) / (squareSize * 2) * (squareSize * 2);
+
         gc.setFill(Color.WHITE);
         // Top Row
         for (int row = 0; row < 4; row ++)
-            for (int x = row % 2 == 0 ? 0 : 5; x < borderCanvas.getWidth(); x += 10)
-                gc.fillRect(x, row * 5, 5, 5);
+            for (int x = row % 2 == 0 ? 0 : squareSize; x < roundedWidth; x += squareSize * 2)
+                gc.fillRect(x, row * squareSize, squareSize, squareSize);
 
         // Left Side
         for (int column = 0; column < 4; column ++)
-            for (int y = column % 2 == 0 ? 0 : 5; y < borderCanvas.getHeight(); y += 10)
-                gc.fillRect(column * 5, y, 5, 5);
+            for (int y = column % 2 == 0 ? 0 : squareSize; y < roundedHeight; y += squareSize * 2)
+                gc.fillRect(column * squareSize, y, squareSize, squareSize);
 
         // Bottom Row
         for (int row = 0; row < 4; row ++)
-            for (double x = row % 2 == 0 ? 0 : 5; x < borderCanvas.getWidth(); x += 10) {
-                double y = borderCanvas.getHeight() - 5 - row * 5;
-                gc.fillRect(x, y, 5, 5);
+            for (double x = row % 2 != 0 ? 0 : squareSize; x < roundedWidth; x += squareSize * 2) {
+                double y = roundedHeight - squareSize - row * squareSize;
+                gc.fillRect(x, y, squareSize, squareSize);
             }
 
         // Right Side
         for (int column = 0; column < 4; column ++)
-            for (int y = column % 2 == 0 ? 0 : 5; y < borderCanvas.getHeight(); y += 10) {
-                double x = borderCanvas.getWidth() - 5 - column * 5;
-                gc.fillRect(x, y, 5, 5);
+            for (int y = column % 2 == 0 ? 0 : squareSize; y < roundedHeight; y += squareSize * 2) {
+                int x = roundedWidth - column * squareSize;
+                gc.fillRect(x, y, squareSize, squareSize);
             }
     }
 

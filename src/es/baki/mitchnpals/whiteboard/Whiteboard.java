@@ -20,9 +20,15 @@ public class Whiteboard extends Application {
     private boolean mouseDragged = false, needsRedraw = false;
 
     public static void main(String... strings) {
+        // Starts the multicast receiver for network discovery
+        try {
+            new MulticastListener().start();
+        } catch (IOException e) {
+            System.err.println("Could not start multicast listener");
+            e.printStackTrace();
+        }
         // Starts the GUI
         launch();
-        // Starts the multicast receiver for network discovery
     }
 
     @Override
@@ -73,7 +79,7 @@ public class Whiteboard extends Application {
 
         System.out.printf("Border Canvas Dimensions: w:%f h:%f%n", borderCanvas.getWidth(), borderCanvas.getHeight());
 
-        int squareSize = 5;
+        int squareSize = 10;
         int roundedWidth = ((int) borderCanvas.getWidth()) / (squareSize * 2) * (squareSize * 2);
         int roundedHeight = ((int) borderCanvas.getHeight()) / (squareSize * 2) * (squareSize * 2);
 

@@ -22,7 +22,7 @@ public class Whiteboard extends Application {
     public static void main(String... strings) {
         // Starts the multicast receiver for network discovery
         try {
-            new MulticastListener().start();
+            new BroadcastListener().start();
         } catch (IOException e) {
             System.err.println("Could not start multicast listener");
             e.printStackTrace();
@@ -32,7 +32,7 @@ public class Whiteboard extends Application {
     }
 
     @Override
-    public void start(Stage primaryStage) throws Exception {
+    public void start(Stage primaryStage) {
         this.primaryStage = primaryStage;
 
         Group root = new Group();
@@ -79,30 +79,32 @@ public class Whiteboard extends Application {
 
         System.out.printf("Border Canvas Dimensions: w:%f h:%f%n", borderCanvas.getWidth(), borderCanvas.getHeight());
 
-        int squareSize = 10;
+        int squareSize = 30;
         int roundedWidth = ((int) borderCanvas.getWidth()) / (squareSize * 2) * (squareSize * 2);
         int roundedHeight = ((int) borderCanvas.getHeight()) / (squareSize * 2) * (squareSize * 2);
 
+        int rows = 2;
+
         gc.setFill(Color.WHITE);
         // Top Row
-        for (int row = 0; row < 4; row ++)
+        for (int row = 0; row < rows; row ++)
             for (int x = row % 2 == 0 ? 0 : squareSize; x < roundedWidth; x += squareSize * 2)
                 gc.fillRect(x, row * squareSize, squareSize, squareSize);
 
         // Left Side
-        for (int column = 0; column < 4; column ++)
+        for (int column = 0; column < rows; column ++)
             for (int y = column % 2 == 0 ? 0 : squareSize; y < roundedHeight; y += squareSize * 2)
                 gc.fillRect(column * squareSize, y, squareSize, squareSize);
 
         // Bottom Row
-        for (int row = 0; row < 4; row ++)
+        for (int row = 0; row < rows; row ++)
             for (double x = row % 2 != 0 ? 0 : squareSize; x < roundedWidth; x += squareSize * 2) {
                 double y = roundedHeight - squareSize - row * squareSize;
                 gc.fillRect(x, y, squareSize, squareSize);
             }
 
         // Right Side
-        for (int column = 0; column < 4; column ++)
+        for (int column = 0; column < rows; column ++)
             for (int y = column % 2 == 0 ? 0 : squareSize; y < roundedHeight; y += squareSize * 2) {
                 int x = roundedWidth - column * squareSize;
                 gc.fillRect(x, y, squareSize, squareSize);

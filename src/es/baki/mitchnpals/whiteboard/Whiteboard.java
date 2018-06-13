@@ -78,37 +78,17 @@ public class Whiteboard extends Application {
         gc.clearRect(0, 0, borderCanvas.getWidth(), borderCanvas.getHeight());
 
         System.out.printf("Border Canvas Dimensions: w:%f h:%f%n", borderCanvas.getWidth(), borderCanvas.getHeight());
-
-        int squareSize = 30;
-        int roundedWidth = ((int) borderCanvas.getWidth()) / (squareSize * 2) * (squareSize * 2);
-        int roundedHeight = ((int) borderCanvas.getHeight()) / (squareSize * 2) * (squareSize * 2);
-
-        int rows = 2;
-
+        int borderThickness = 5, borderPadding = 5;
+        double width = borderCanvas.getWidth(), height = borderCanvas.getHeight();
         gc.setFill(Color.WHITE);
-        // Top Row
-        for (int row = 0; row < rows; row ++)
-            for (int x = row % 2 == 0 ? 0 : squareSize; x < roundedWidth; x += squareSize * 2)
-                gc.fillRect(x, row * squareSize, squareSize, squareSize);
-
-        // Left Side
-        for (int column = 0; column < rows; column ++)
-            for (int y = column % 2 == 0 ? 0 : squareSize; y < roundedHeight; y += squareSize * 2)
-                gc.fillRect(column * squareSize, y, squareSize, squareSize);
-
-        // Bottom Row
-        for (int row = 0; row < rows; row ++)
-            for (double x = row % 2 != 0 ? 0 : squareSize; x < roundedWidth; x += squareSize * 2) {
-                double y = roundedHeight - squareSize - row * squareSize;
-                gc.fillRect(x, y, squareSize, squareSize);
-            }
-
-        // Right Side
-        for (int column = 0; column < rows; column ++)
-            for (int y = column % 2 == 0 ? 0 : squareSize; y < roundedHeight; y += squareSize * 2) {
-                int x = roundedWidth - column * squareSize;
-                gc.fillRect(x, y, squareSize, squareSize);
-            }
+        // Top Border
+        gc.fillRect(borderPadding, borderPadding, width - borderPadding * 2, borderThickness);
+        // Left Border
+        gc.fillRect(borderPadding, borderPadding, borderThickness, height - borderPadding * 2);
+        // Bottom Border
+        gc.fillRect(borderPadding, height - borderThickness - borderPadding, width - borderPadding * 2, borderThickness);
+        // Right Border
+        gc.fillRect(width - borderThickness - borderPadding, borderPadding, borderThickness, height - borderPadding * 2);
     }
 
     private Canvas makeMenuCanvas() {
@@ -116,7 +96,7 @@ public class Whiteboard extends Application {
         GraphicsContext gc = menuCanvas.getGraphicsContext2D();
 
         gc.setFill(Color.LIGHTGRAY);
-        gc.fillRoundRect(10, 10, 20, 20, 10, 10);
+        // gc.fillRoundRect(10, 10, 20, 20, 10, 10);
 
         return menuCanvas;
     }

@@ -2,27 +2,37 @@ package es.baki.mitchnpals.whiteboard;
 
 import javafx.application.Application;
 import javafx.event.EventHandler;
+import javafx.geometry.Insets;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Button;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.net.*;
 
 public class Whiteboard extends Application {
     private Color currentColor = Color.BLUE;
     private Stage primaryStage;
-    private Canvas drawingCanvas, menuCanvas, borderCanvas;
+    private Canvas drawingCanvas, uiCanvas;
+    private Pane controlPane;
+    private GridPane controlDrawContainer;
     private boolean mouseDragged = false, needsRedraw = false;
+    private int btnSize, borderThickness = 5, borderPadding = 5;
+    private Button colorPickerBtn, eraseToolBtn, penToolBtn, sizePickerBtn;
+
+    private static BroadcastListener nm;
 
     public static void main(String... strings) {
         // Starts the multicast receiver for network discovery
         try {
-            new BroadcastListener().start();
+            (nm = new BroadcastListener()).start();
         } catch (IOException e) {
             System.err.println("Could not start multicast listener");
             e.printStackTrace();
@@ -39,12 +49,20 @@ public class Whiteboard extends Application {
         Scene s = new Scene(root, 300, 300, Color.BLACK);
         primaryStage.setScene(s);
         primaryStage.show();
+        primaryStage.setOnCloseRequest((windowEvent) -> {
+            nm.appClosed();
+            try {
+                nm.wait();
+            } catch (Exception e ) {
+                System.out.printf("Interrupted waiting for socket to close");
+            }
+            System.exit(0);
+        });
 
         drawingCanvas = new Canvas(primaryStage.getWidth(), primaryStage.getHeight());
         GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
 
         makeBorderCanvas();
-        makeMenuCanvas();
 
         redrawBorderCanvas();
         gc.setFill(Color.BLUE);
@@ -52,34 +70,42 @@ public class Whiteboard extends Application {
         // Resize the width of the drawable surface automatically to match the size of the window
         s.widthProperty().addListener((obs, oldVal, newVal) -> {
             System.out.printf("Width changed from %d to %d%n", oldVal.intValue(), newVal.intValue());
-            drawingCanvas.setWidth(newVal.doubleValue());
-            borderCanvas.setWidth(newVal.doubleValue());
+            drawingCanvas.setWidth(newVal.doubleValue() - ((borderPadding + borderThickness) * 2));
+            uiCanvas.setWidth(newVal.doubleValue());
             redrawBorderCanvas(); // needsRedraw = true;
         });
 
         // Resize the height of the drawable surface automatically to match the size of the window
         s.heightProperty().addListener((obs, oldVal, newVal) -> {
             System.out.printf("Height changed from %d to %d%n", oldVal.intValue(), newVal.intValue());
-            drawingCanvas.setHeight(newVal.doubleValue());
-            borderCanvas.setHeight(newVal.doubleValue());
+            drawingCanvas.setHeight(newVal.doubleValue() - ((borderPadding + borderThickness) * 2));
+            uiCanvas.setHeight(newVal.doubleValue());
             redrawBorderCanvas(); // needsRedraw = true;
         });
 
         addMouseListeners(drawingCanvas);
 
-        root.getChildren().add(borderCanvas);
-        root.getChildren().add(drawingCanvas);
-        root.getChildren().add(menuCanvas);
+        makeMenuPane();
+        controlDrawContainer = new GridPane();
+        controlDrawContainer.setHgap(5);
+        controlDrawContainer.setVgap(5);
+        controlDrawContainer.setGridLinesVisible(true); // DEBUG
+
+        controlDrawContainer.add(drawingCanvas,0,0,2,2);
+        controlDrawContainer.add(controlPane, 0,0);
+
+        root.getChildren().addAll(uiCanvas, controlDrawContainer);
+        controlDrawContainer.setTranslateX(borderPadding + borderThickness);
+        controlDrawContainer.setTranslateY(borderPadding + borderThickness);
 
     }
 
     private void redrawBorderCanvas() {
-        GraphicsContext gc = borderCanvas.getGraphicsContext2D();
-        gc.clearRect(0, 0, borderCanvas.getWidth(), borderCanvas.getHeight());
+        GraphicsContext gc = uiCanvas.getGraphicsContext2D();
+        gc.clearRect(0, 0, uiCanvas.getWidth(), uiCanvas.getHeight());
 
-        System.out.printf("Border Canvas Dimensions: w:%f h:%f%n", borderCanvas.getWidth(), borderCanvas.getHeight());
-        int borderThickness = 5, borderPadding = 5;
-        double width = borderCanvas.getWidth(), height = borderCanvas.getHeight();
+        System.out.printf("Border Canvas Dimensions: w:%f h:%f%n", uiCanvas.getWidth(), uiCanvas.getHeight());
+        double width = uiCanvas.getWidth(), height = uiCanvas.getHeight();
         gc.setFill(Color.WHITE);
         // Top Border
         gc.fillRect(borderPadding, borderPadding, width - borderPadding * 2, borderThickness);
@@ -91,20 +117,17 @@ public class Whiteboard extends Application {
         gc.fillRect(width - borderThickness - borderPadding, borderPadding, borderThickness, height - borderPadding * 2);
     }
 
-    private Canvas makeMenuCanvas() {
-        menuCanvas = new Canvas(100, 100);
-        GraphicsContext gc = menuCanvas.getGraphicsContext2D();
+    private void makeMenuPane() {
+        controlPane = new Pane();
+        Button btn = new Button("Test");
 
-        gc.setFill(Color.LIGHTGRAY);
-        // gc.fillRoundRect(10, 10, 20, 20, 10, 10);
-
-        return menuCanvas;
+        controlPane.getChildren().add(btn);
     }
 
     private Canvas makeBorderCanvas() {
-        borderCanvas = new Canvas(primaryStage.getWidth(), primaryStage.getHeight());
+        uiCanvas = new Canvas(primaryStage.getWidth(), primaryStage.getHeight());
 
-        return borderCanvas;
+        return uiCanvas;
     }
 
     private void addMouseListeners(Canvas canvas) {

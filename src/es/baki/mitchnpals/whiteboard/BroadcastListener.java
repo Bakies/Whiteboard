@@ -39,4 +39,8 @@ public class BroadcastListener extends Thread {
             e.printStackTrace();
         }
     }
+
+    public void appClosed() {
+        socket.close();
+    }
 }

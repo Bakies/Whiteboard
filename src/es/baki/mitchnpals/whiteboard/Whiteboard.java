@@ -12,6 +12,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
@@ -20,11 +21,11 @@ import java.io.IOException;
 public class Whiteboard extends Application {
     private Color currentColor = Color.BLUE;
     private Stage primaryStage;
-    private Canvas drawingCanvas, uiCanvas;
+    private Canvas drawingCanvas, borderCanvas;
     private Pane controlPane;
     private GridPane controlDrawContainer;
     private boolean mouseDragged = false, needsRedraw = false;
-    private int btnSize, borderThickness = 5, borderPadding = 5;
+    private int btnSize = 60, borderThickness = 5, borderPadding = 5;
     private Button colorPickerBtn, eraseToolBtn, penToolBtn, sizePickerBtn;
 
     private static BroadcastListener nm;
@@ -71,7 +72,7 @@ public class Whiteboard extends Application {
         s.widthProperty().addListener((obs, oldVal, newVal) -> {
             System.out.printf("Width changed from %d to %d%n", oldVal.intValue(), newVal.intValue());
             drawingCanvas.setWidth(newVal.doubleValue() - ((borderPadding + borderThickness) * 2));
-            uiCanvas.setWidth(newVal.doubleValue());
+            borderCanvas.setWidth(newVal.doubleValue());
             redrawBorderCanvas(); // needsRedraw = true;
         });
 
@@ -79,7 +80,7 @@ public class Whiteboard extends Application {
         s.heightProperty().addListener((obs, oldVal, newVal) -> {
             System.out.printf("Height changed from %d to %d%n", oldVal.intValue(), newVal.intValue());
             drawingCanvas.setHeight(newVal.doubleValue() - ((borderPadding + borderThickness) * 2));
-            uiCanvas.setHeight(newVal.doubleValue());
+            borderCanvas.setHeight(newVal.doubleValue());
             redrawBorderCanvas(); // needsRedraw = true;
         });
 
@@ -89,23 +90,22 @@ public class Whiteboard extends Application {
         controlDrawContainer = new GridPane();
         controlDrawContainer.setHgap(5);
         controlDrawContainer.setVgap(5);
-        controlDrawContainer.setGridLinesVisible(true); // DEBUG
 
         controlDrawContainer.add(drawingCanvas,0,0,2,2);
         controlDrawContainer.add(controlPane, 0,0);
 
-        root.getChildren().addAll(uiCanvas, controlDrawContainer);
+        root.getChildren().addAll(borderCanvas, controlDrawContainer);
         controlDrawContainer.setTranslateX(borderPadding + borderThickness);
         controlDrawContainer.setTranslateY(borderPadding + borderThickness);
 
     }
 
     private void redrawBorderCanvas() {
-        GraphicsContext gc = uiCanvas.getGraphicsContext2D();
-        gc.clearRect(0, 0, uiCanvas.getWidth(), uiCanvas.getHeight());
+        GraphicsContext gc = borderCanvas.getGraphicsContext2D();
+        gc.clearRect(0, 0, borderCanvas.getWidth(), borderCanvas.getHeight());
 
-        System.out.printf("Border Canvas Dimensions: w:%f h:%f%n", uiCanvas.getWidth(), uiCanvas.getHeight());
-        double width = uiCanvas.getWidth(), height = uiCanvas.getHeight();
+        System.out.printf("Border Canvas Dimensions: w:%f h:%f%n", borderCanvas.getWidth(), borderCanvas.getHeight());
+        double width = borderCanvas.getWidth(), height = borderCanvas.getHeight();
         gc.setFill(Color.WHITE);
         // Top Border
         gc.fillRect(borderPadding, borderPadding, width - borderPadding * 2, borderThickness);
@@ -118,16 +118,28 @@ public class Whiteboard extends Application {
     }
 
     private void makeMenuPane() {
-        controlPane = new Pane();
-        Button btn = new Button("Test");
+        controlPane = new VBox(5);
+        controlPane.setPadding(new Insets(5,0,0,5));
 
-        controlPane.getChildren().add(btn);
+        colorPickerBtn = new Button("Color");
+        colorPickerBtn.setPrefSize(btnSize, btnSize);
+
+        eraseToolBtn = new Button("Erase");
+        eraseToolBtn.setPrefSize(btnSize, btnSize);
+
+        penToolBtn = new Button("Pen");
+        penToolBtn.setPrefSize(btnSize, btnSize);
+
+        sizePickerBtn = new Button("Size");
+        sizePickerBtn.setPrefSize(btnSize, btnSize);
+
+        controlPane.getChildren().addAll(penToolBtn, eraseToolBtn, colorPickerBtn, sizePickerBtn);
     }
 
     private Canvas makeBorderCanvas() {
-        uiCanvas = new Canvas(primaryStage.getWidth(), primaryStage.getHeight());
+        borderCanvas = new Canvas(primaryStage.getWidth(), primaryStage.getHeight());
 
-        return uiCanvas;
+        return borderCanvas;
     }
 
     private void addMouseListeners(Canvas canvas) {

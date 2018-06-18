@@ -15,7 +15,11 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
+import java.awt.print.PrinterAbortException;
+import java.io.File;;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 public class Whiteboard extends Application {
     private Color currentColor = Color.BLUE;
@@ -24,20 +28,18 @@ public class Whiteboard extends Application {
     private Pane controlPane;
     private GridPane controlDrawContainer;
     private boolean mouseDragged = false, needsRedraw = false, erasing = false;
-    private int btnSize = 75, borderThickness = 10, borderPadding = 5, penSize = 30, eraseSize = 30;
+    private int btnSize = 75, borderThickness = 10, borderPadding = 5, penSize = 7, eraseSize = 30;
     private ColorPicker colorPicker;
     private Button colorPickerBtn, eraseToolBtn, penToolBtn, sizePickerBtn;
+    public final static boolean debug = false;
 
-    private static BroadcastListener nm;
+    private BroadcastListener bl;
+    private MotionListener ml;
 
-    public static void main(String... strings) {
-        // Starts the multicast receiver for network discovery
-        try {
-            (nm = new BroadcastListener()).start();
-        } catch (IOException e) {
-            System.err.println("Could not start multicast listener");
-            e.printStackTrace();
-        }
+    public static void main(String... strings) throws IOException {
+        debugFile = new File("playback.txt");
+        if (debug)
+            debugFilePrinter = new PrintWriter(new FileWriter(debugFile));
         // Starts the GUI
         launch();
     }
@@ -51,11 +53,13 @@ public class Whiteboard extends Application {
         primaryStage.setScene(s);
         primaryStage.show();
         primaryStage.setOnCloseRequest((windowEvent) -> {
-            nm.appClosed();
+            bl.appClosed();
+            ml.appClosed();
             try {
-                nm.wait();
+                bl.wait();
+                ml.wait();
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                // Dont care
             }
             System.exit(0);
         });
@@ -91,12 +95,22 @@ public class Whiteboard extends Application {
         controlDrawContainer.setHgap(5);
         controlDrawContainer.setVgap(5);
 
-        controlDrawContainer.add(drawingCanvas,0,0,2,2);
-        controlDrawContainer.add(controlPane, 0,0);
+        controlDrawContainer.add(drawingCanvas, 0, 0, 2, 2);
+        controlDrawContainer.add(controlPane, 0, 0);
 
         root.getChildren().addAll(borderCanvas, controlDrawContainer);
         controlDrawContainer.setTranslateX(borderPadding + borderThickness);
         controlDrawContainer.setTranslateY(borderPadding + borderThickness);
+
+        // Starts the server listening for motion controls
+        (ml = new MotionListener(this)).start();
+
+        // Starts the multicast receiver for network discovery
+        try {
+            (bl = new BroadcastListener()).start();
+        } catch (IOException e) {
+            System.err.println("Could not make server socket, already running?");
+        }
 
     }
 
@@ -119,7 +133,7 @@ public class Whiteboard extends Application {
 
     private void makeMenuPane() {
         controlPane = new VBox(5);
-        controlPane.setPadding(new Insets(10,0,0,10));
+        controlPane.setPadding(new Insets(10, 0, 0, 10));
 
         colorPicker = new ColorPicker(Color.BLUE);
         colorPicker.setPrefSize(btnSize, btnSize);
@@ -169,34 +183,47 @@ public class Whiteboard extends Application {
         canvas.addEventHandler(MouseEvent.MOUSE_PRESSED, event -> {
             onMousePressed(event.getX(), event.getY());
         });
- 
-        canvas.addEventHandler(MouseEvent.MOUSE_CLICKED, event ->{
+
+        canvas.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
             onMouseClicked(event.getX(), event.getY());
         });
 
         canvas.addEventHandler(MouseEvent.MOUSE_DRAGGED, event -> {
             onMouseDragged(event.getX(), event.getY());
         });
- 
-        canvas.addEventHandler(MouseEvent.MOUSE_RELEASED, event ->  {
+
+        canvas.addEventHandler(MouseEvent.MOUSE_RELEASED, event -> {
             onMouseReleased();
         });
     }
-    private void onMouseReleased() {
+
+    public static File debugFile = new File("playback.txt");
+    public static PrintWriter debugFilePrinter;
+    public void onMouseReleased() {
         GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
         System.out.printf("Mouse Released Event%n");
+        if (debug) {
+            debugFilePrinter.printf("up%n");
+            debugFilePrinter.flush();
+        }
         gc.save();
     }
-    private void onMousePressed(double x, double y) {
+
+    public void onMousePressed(double x, double y) {
         GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
         System.out.printf("Mouse Pressed Event @ %f %f%n", x, y);
+        if (debug)
+            debugFilePrinter.printf("down,%f,%f%n", x, y);
         gc.beginPath();
         gc.moveTo(x, y);
         gc.stroke();
     }
-    private void onMouseDragged(double x, double y) {
+
+    public void onMouseDragged(double x, double y) {
         GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
         System.out.printf("Mouse Dragged Event @ %f %f%n", x, y);
+        if (debug)
+            debugFilePrinter.printf("%f,%f%n", x, y);
         gc.lineTo(x, y);
         if (erasing) {
             gc.setStroke(Color.BLACK);
@@ -209,8 +236,8 @@ public class Whiteboard extends Application {
         mouseDragged = true;
 
     }
-    private void onMouseClicked(double x, double y) {
-        GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
+
+    public void onMouseClicked(double x, double y) {
         System.out.printf("Mouse Click Event @ %f %f%n", x, y);
         if (mouseDragged) {
             // drawMenuOnCanvas(canvas);
@@ -221,6 +248,13 @@ public class Whiteboard extends Application {
 
         }
         mouseDragged = false;
+    }
 
+    public int getHeight() {
+        return (int) drawingCanvas.getHeight();
+    }
+    public int getWidth() {
+        return (int) drawingCanvas.getWidth();
     }
 }
+

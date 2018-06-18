@@ -1,15 +1,14 @@
 package es.baki.mitchnpals.whiteboard;
 
 import javafx.application.Application;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
+import javafx.scene.control.ColorPicker;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
@@ -24,8 +23,9 @@ public class Whiteboard extends Application {
     private Canvas drawingCanvas, borderCanvas;
     private Pane controlPane;
     private GridPane controlDrawContainer;
-    private boolean mouseDragged = false, needsRedraw = false;
-    private int btnSize = 60, borderThickness = 5, borderPadding = 5;
+    private boolean mouseDragged = false, needsRedraw = false, erasing = false;
+    private int btnSize = 75, borderThickness = 10, borderPadding = 5, penSize = 30, eraseSize = 30;
+    private ColorPicker colorPicker;
     private Button colorPickerBtn, eraseToolBtn, penToolBtn, sizePickerBtn;
 
     private static BroadcastListener nm;
@@ -54,8 +54,8 @@ public class Whiteboard extends Application {
             nm.appClosed();
             try {
                 nm.wait();
-            } catch (Exception e ) {
-                System.out.printf("Interrupted waiting for socket to close");
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
             System.exit(0);
         });
@@ -119,21 +119,44 @@ public class Whiteboard extends Application {
 
     private void makeMenuPane() {
         controlPane = new VBox(5);
-        controlPane.setPadding(new Insets(5,0,0,5));
+        controlPane.setPadding(new Insets(10,0,0,10));
 
-        colorPickerBtn = new Button("Color");
-        colorPickerBtn.setPrefSize(btnSize, btnSize);
-
-        eraseToolBtn = new Button("Erase");
-        eraseToolBtn.setPrefSize(btnSize, btnSize);
+        colorPicker = new ColorPicker(Color.BLUE);
+        colorPicker.setPrefSize(btnSize, btnSize);
+        colorPicker.getStyleClass().add("button");
+        colorPicker.setStyle("-fx-background-color: #0000FF;");
+        colorPicker.setOnAction(e -> {
+            controlDrawContainer.getChildren().remove(colorPicker);
+            colorPicker.setStyle(String.format("-fx-background-color: #%s;",
+                    colorPicker.getValue().toString().substring(2, 8)));
+            System.out.println(colorPicker.getValue().toString().substring(2, 8));
+            currentColor = colorPicker.getValue();
+        });
 
         penToolBtn = new Button("Pen");
         penToolBtn.setPrefSize(btnSize, btnSize);
+        penToolBtn.setDefaultButton(true);
+        penToolBtn.setOnAction(e -> {
+            penToolBtn.setDefaultButton(true);
+            eraseToolBtn.setDefaultButton(false);
+
+            erasing = false;
+        });
+
+        eraseToolBtn = new Button("Erase");
+        eraseToolBtn.setPrefSize(btnSize, btnSize);
+        eraseToolBtn.setOnAction(e -> {
+            eraseToolBtn.setDefaultButton(true);
+            penToolBtn.setDefaultButton(false);
+
+            erasing = true;
+        });
+
 
         sizePickerBtn = new Button("Size");
         sizePickerBtn.setPrefSize(btnSize, btnSize);
 
-        controlPane.getChildren().addAll(penToolBtn, eraseToolBtn, colorPickerBtn, sizePickerBtn);
+        controlPane.getChildren().addAll(penToolBtn, eraseToolBtn, colorPicker, sizePickerBtn);
     }
 
     private Canvas makeBorderCanvas() {
@@ -143,38 +166,61 @@ public class Whiteboard extends Application {
     }
 
     private void addMouseListeners(Canvas canvas) {
-        GraphicsContext gc = canvas.getGraphicsContext2D();
         canvas.addEventHandler(MouseEvent.MOUSE_PRESSED, event -> {
-            System.out.printf("Mouse Pressed Event @ %f %f%n", event.getX(), event.getY());
-            gc.beginPath();
-            gc.moveTo(event.getX(), event.getY());
-            gc.stroke();
+            onMousePressed(event.getX(), event.getY());
         });
  
         canvas.addEventHandler(MouseEvent.MOUSE_CLICKED, event ->{
-            System.out.printf("Mouse Click Event @ %f %f%n", event.getX(), event.getY());
-            if (mouseDragged) {
-                // drawMenuOnCanvas(canvas);
-            } else {
-                System.out.println("Not a drag");
-                if (needsRedraw)
-                    redrawBorderCanvas();
-
-            }
-            mouseDragged = false;
+            onMouseClicked(event.getX(), event.getY());
         });
 
         canvas.addEventHandler(MouseEvent.MOUSE_DRAGGED, event -> {
-            System.out.printf("Mouse Dragged Event @ %f %f%n", event.getX(), event.getY());
-            gc.lineTo(event.getX(), event.getY());
-            gc.setStroke(currentColor);
-            gc.stroke();
-            mouseDragged = true;
+            onMouseDragged(event.getX(), event.getY());
         });
  
         canvas.addEventHandler(MouseEvent.MOUSE_RELEASED, event ->  {
-            System.out.printf("Mouse Released Event @ %f %f%n", event.getX(), event.getY());
-            gc.save();
+            onMouseReleased();
         });
+    }
+    private void onMouseReleased() {
+        GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
+        System.out.printf("Mouse Released Event%n");
+        gc.save();
+    }
+    private void onMousePressed(double x, double y) {
+        GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
+        System.out.printf("Mouse Pressed Event @ %f %f%n", x, y);
+        gc.beginPath();
+        gc.moveTo(x, y);
+        gc.stroke();
+    }
+    private void onMouseDragged(double x, double y) {
+        GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
+        System.out.printf("Mouse Dragged Event @ %f %f%n", x, y);
+        gc.lineTo(x, y);
+        if (erasing) {
+            gc.setStroke(Color.BLACK);
+            gc.setLineWidth(eraseSize);
+        } else {
+            gc.setStroke(currentColor);
+            gc.setLineWidth(penSize);
+        }
+        gc.stroke();
+        mouseDragged = true;
+
+    }
+    private void onMouseClicked(double x, double y) {
+        GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
+        System.out.printf("Mouse Click Event @ %f %f%n", x, y);
+        if (mouseDragged) {
+            // drawMenuOnCanvas(canvas);
+        } else {
+            System.out.println("Not a drag");
+            if (needsRedraw)
+                redrawBorderCanvas();
+
+        }
+        mouseDragged = false;
+
     }
 }

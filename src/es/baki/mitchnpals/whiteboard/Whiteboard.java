@@ -148,6 +148,7 @@ public class Whiteboard extends Application {
         });
 
         penToolBtn = new Button("Pen");
+        penToolBtn.setStyle("-fx-background-color: #0000FF;");
         penToolBtn.setPrefSize(btnSize, btnSize);
         penToolBtn.setDefaultButton(true);
         penToolBtn.setOnAction(e -> {
@@ -158,6 +159,7 @@ public class Whiteboard extends Application {
         });
 
         eraseToolBtn = new Button("Erase");
+        eraseToolBtn.setStyle("-fx-background-color: #0000FF;");
         eraseToolBtn.setPrefSize(btnSize, btnSize);
         eraseToolBtn.setOnAction(e -> {
             eraseToolBtn.setDefaultButton(true);
@@ -168,6 +170,7 @@ public class Whiteboard extends Application {
 
 
         sizePickerBtn = new Button("Size");
+        sizePickerBtn.setStyle("-fx-background-color: #0000FF;");
         sizePickerBtn.setPrefSize(btnSize, btnSize);
 
         controlPane.getChildren().addAll(penToolBtn, eraseToolBtn, colorPicker, sizePickerBtn);

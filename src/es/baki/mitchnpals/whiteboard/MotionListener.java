@@ -62,6 +62,11 @@ public class MotionListener extends Thread {
             try {
                 BufferedReader in = new BufferedReader(new InputStreamReader(s.getInputStream()));
                 while (true){
+                    try {
+                        Thread.sleep(5);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                     String x = in.readLine();
                     if (x == null)
                         continue;

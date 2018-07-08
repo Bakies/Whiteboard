@@ -21,6 +21,11 @@ public class BroadcastListener extends Thread {
         try {
             System.out.println("Starting broadcast listening service");
             while (true) {
+                try {
+                    Thread.sleep(5);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 byte[] buf = new byte[256];
                 DatagramPacket packet = new DatagramPacket(buf, buf.length);
                 socket.receive(packet);

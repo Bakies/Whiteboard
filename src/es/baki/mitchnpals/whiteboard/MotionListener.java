@@ -70,7 +70,7 @@ public class MotionListener extends Thread {
                     String x = in.readLine();
                     if (x == null)
                         continue;
-                    System.out.printf("Received %s%n", x);
+                    System.out.printf("Received '%s'%n", x);
                     String[] xs = x.split(",");
                     if (xs[0].equals("down")) {
                         double xcoord = Double.parseDouble(xs[1]);
@@ -81,6 +81,10 @@ public class MotionListener extends Thread {
                         w.onMousePressed(xcoord, ycoord);
                     } else if (xs[0].equals("up")) {
                         w.onMouseReleased();
+                    } else if (xs[0].equals("calibrating")) {
+                        w.calibrate();
+                    } else if (xs[0].equals("ready")) {
+                        w.stopCalibrate();
                     } else  {
                         try {
                             double xcoord = Double.parseDouble(xs[0]);

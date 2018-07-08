@@ -11,8 +11,11 @@ import javafx.scene.control.ColorPicker;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 
 import java.awt.print.PrinterAbortException;
@@ -32,9 +35,10 @@ public class Whiteboard extends Application {
     private ColorPicker colorPicker;
     private Button colorPickerBtn, eraseToolBtn, penToolBtn, sizePickerBtn;
     public final static boolean debug = false;
-
+    public Group root;
     private BroadcastListener bl;
     private MotionListener ml;
+    private Scene mainScene;
 
     public static void main(String... strings) throws IOException {
         debugFile = new File("playback.txt");
@@ -48,9 +52,8 @@ public class Whiteboard extends Application {
     public void start(Stage primaryStage) {
         this.primaryStage = primaryStage;
 
-        Group root = new Group();
-        Scene s = new Scene(root, 300, 300, Color.BLACK);
-        primaryStage.setScene(s);
+        root = new Group();
+        primaryStage.setScene(mainScene);
         primaryStage.show();
         primaryStage.setOnCloseRequest((windowEvent) -> {
             bl.appClosed();
@@ -63,7 +66,7 @@ public class Whiteboard extends Application {
             }
             System.exit(0);
         });
-
+        mainScene = new Scene(root, 300, 300, Color.BLACK);
         drawingCanvas = new Canvas(primaryStage.getWidth(), primaryStage.getHeight());
         GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
 
@@ -73,7 +76,7 @@ public class Whiteboard extends Application {
         gc.setFill(Color.BLUE);
 
         // Resize the width of the drawable surface automatically to match the size of the window
-        s.widthProperty().addListener((obs, oldVal, newVal) -> {
+        mainScene.widthProperty().addListener((obs, oldVal, newVal) -> {
             System.out.printf("Width changed from %d to %d%n", oldVal.intValue(), newVal.intValue());
             drawingCanvas.setWidth(newVal.doubleValue() - ((borderPadding + borderThickness) * 2));
             borderCanvas.setWidth(newVal.doubleValue());
@@ -81,7 +84,7 @@ public class Whiteboard extends Application {
         });
 
         // Resize the height of the drawable surface automatically to match the size of the window
-        s.heightProperty().addListener((obs, oldVal, newVal) -> {
+        mainScene.heightProperty().addListener((obs, oldVal, newVal) -> {
             System.out.printf("Height changed from %d to %d%n", oldVal.intValue(), newVal.intValue());
             drawingCanvas.setHeight(newVal.doubleValue() - ((borderPadding + borderThickness) * 2));
             borderCanvas.setHeight(newVal.doubleValue());
@@ -258,6 +261,19 @@ public class Whiteboard extends Application {
     }
     public int getWidth() {
         return (int) drawingCanvas.getWidth();
+    }
+
+    public void calibrate() {
+        StackPane g = new StackPane();
+        Text t = new Text(String.format("Calibrating%nPlease Stand Back"));
+        t.setTextAlignment(TextAlignment.CENTER);
+        Scene calibrate = new Scene(g);
+        g.getChildren().addAll(borderCanvas);
+        primaryStage.setScene(calibrate);
+    }
+
+    public void stopCalibrate() {
+        primaryStage.setScene(mainScene);
     }
 }
 

@@ -37,7 +37,7 @@ class Paint(object):
     def setup(self):
         self.oldX = None
         self.oldY = None
-        self.lineWidth = self.chooseSizeButton.get()
+        self.lineWidth = self.sizeButton.get()
         self.color = self.DEFAULT_COLOR
         self.eraserOn = False
         self.activateButton = self.penButton
@@ -61,7 +61,7 @@ class Paint(object):
         self.eraserOn = eraser_mode
 
     def paint(self, event):
-        self.lineWidth = self.chooseSizeButton.get()
+        self.lineWidth = self.sizeButton.get()
         paintColor = 'white' if self.eraserOn else self.color
         if self.oldX and self.oldY:
             self.canvas.create_line(self.oldX, self.oldY, event.x, event.y,

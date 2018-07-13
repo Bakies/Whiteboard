@@ -1,0 +1,7 @@
+digraph "packages" {
+charset="utf-8"
+rankdir=BT
+"0" [label="jonsucks", shape="box"];
+"1" [label="jonsucks.whiteboard", shape="box"];
+"0" -> "1" [arrowhead="open", arrowtail="none"];
+}

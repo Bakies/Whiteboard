@@ -1,0 +1,5 @@
+digraph "classes" {
+charset="utf-8"
+rankdir=BT
+"0" [label="{Paint|DEFAULT_COLOR : str\lDEFAULT_PEN_SIZE : float\lactivateButton\lcolor : str\leraserOn : bool\llineWidth\loldX : NoneType\loldY : NoneType\lport : int\lserverSocket : socket\l|activateButton()\lchooseColor()\llisten()\llistenToClient()\lpaint()\lreset()\lsetup()\luseEraser()\lusePen()\l}", shape="record"];
+}

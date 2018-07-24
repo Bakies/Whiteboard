@@ -2,42 +2,53 @@ from tkinter import *
 import socket 
 from tkinter.colorchooser import askcolor
 
-
 class Paint(object):
-
-    DEFAULT_PEN_SIZE = 5.0
-    DEFAULT_COLOR = 'black'
+    DEFAULT_COLOR = 'white'
+    
 
     def __init__(self):
+        # Setup server socket
         self.port = 15272
         self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.serverSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.serverSocket.bind(('0.0.0.0', self.port))
+
+        # Setup the Tk interface
         self.root = Tk()
 
+        self.canvas = Canvas(self.root, bg='black')# , width=600, height=600)
+        self.canvas.pack(fill=BOTH, expand=YES, padx = 5, pady = 5)
+
         self.penButton = Button(self.root, text='pen', command=self.usePen)
-        self.penButton.grid(row=0, column=0)
+        self.penButton.configure(width = 10, height = 6, bd=0) 
+        self.canvas.create_window(10, 10, anchor=NW, window=self.penButton)
 
         self.colorButton = Button(self.root, text='color', command=self.chooseColor)
-        self.colorButton.grid(row=0, column=2)
+        self.colorButton.configure(width = 10, height = 6, bd = 0) 
+        self.canvas.create_window(10, 90, anchor=NW, window=self.colorButton)
 
         self.eraserButton = Button(self.root, text='eraser', command=self.useEraser)
-        self.eraserButton.grid(row=0, column=3)
+        self.eraserButton.configure(width = 10, bd = 0, height = 6)
+        self.canvas.create_window(10, 170, anchor=NW, window=self.eraserButton)
 
-        self.sizeButton = Scale(self.root, from_=1, to=10, orient=HORIZONTAL)
-        self.sizeButton.grid(row=0, column=4)
-
-        self.canvas = Canvas(self.root, bg='white', width=600, height=600)
-        self.canvas.grid(row=1, columnspan=5)
+        self.sizes = [1, 3, 5, 8, 10, 20]
+        self.currentSize = 0
+        self.sizeButton = Button(self.root, text='Size (1)', command=self.changeSize)
+        self.sizeButton.configure(width = 10, bd = 0, height = 6)
+        self.canvas.create_window(10, 250, anchor=NW, window=self.sizeButton)
 
         self.setup()
         self.root.mainloop()
         self.listen()
 
+    def changeSize(self):
+        self.currentSize = (self.currentSize + 1) % len(self.sizes)
+        self.sizeButton.configure(text="Size (%d)"%self.sizes[self.currentSize])
+
     def setup(self):
         self.oldX = None
         self.oldY = None
-        self.lineWidth = self.sizeButton.get()
+        self.lineWidth = self.sizes[self.currentSize]
         self.color = self.DEFAULT_COLOR
         self.eraserOn = False
         self.activateButton = self.penButton
@@ -61,8 +72,8 @@ class Paint(object):
         self.eraserOn = eraser_mode
 
     def paint(self, event):
-        self.lineWidth = self.sizeButton.get()
-        paintColor = 'white' if self.eraserOn else self.color
+        self.lineWidth = self.sizes[self.currentSize]
+        paintColor = 'black' if self.eraserOn else self.color
         if self.oldX and self.oldY:
             self.canvas.create_line(self.oldX, self.oldY, event.x, event.y,
                                width=self.lineWidth, fill=paintColor,

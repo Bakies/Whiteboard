@@ -1,4 +1,5 @@
 from tkinter import *
+import threading
 import socket 
 from tkinter.colorchooser import askcolor
 
@@ -8,7 +9,7 @@ class Paint(object):
 
     def __init__(self):
         # Setup server socket
-        self.port = 15272
+        self.port = 15273
         self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.serverSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.serverSocket.bind(('0.0.0.0', self.port))
@@ -37,9 +38,12 @@ class Paint(object):
         self.sizeButton.configure(width = 10, bd = 0, height = 6)
         self.canvas.create_window(10, 250, anchor=NW, window=self.sizeButton)
 
+        # listen for clients in another thread
+        threading.Thread(target = self.listen).start()
+        # self.listen()
+
         self.setup()
         self.root.mainloop()
-        self.listen()
 
     def changeSize(self):
         self.currentSize = (self.currentSize + 1) % len(self.sizes)
@@ -86,10 +90,27 @@ class Paint(object):
 
     # Accepts new sockets from server socket
     def listen(self):
-        pass
+        self.sock.listen(5)
+        while True:
+            client, address = self.sock.accept()
+            client.settimeout(60)
+            threading.Thread(target = self.listenToClient,args = (client,address)).start()
+
     # Recv data from client and translate that to lines in the Tk app
     def listenToClient(self, client, address):
-        pass
+        size = 1024
+        while True:
+            try:
+                data = client.recv(size)
+                if data:
+                    # Set the response to echo back the recieved data 
+                    response = data
+                    client.send(response)
+                else:
+                    raise error('Client disconnected')
+            except:
+                client.close()
+                return False
 
 
 if __name__ == '__main__':
